@@ -83,10 +83,10 @@ const LearnerSubmissions = [
   },
 ];
 
+// Checking for late penalty // return true if late
 function isLate(submitDate, dueDate) {
-  //return true if late
-  let sd = submitDate.split("-");
-  let dd = dueDate.split("-");
+  const sd = submitDate.split("-");
+  const dd = dueDate.split("-");
   //   console.log(sd, dd);
   //   console.log(sd.length);
   for (let i = 0; i < sd.length; i++) {
@@ -98,6 +98,7 @@ function isLate(submitDate, dueDate) {
   return false;
 }
 
+// create a list of all students id from submissions to be iterated through
 function getStudents(submission) {
   let students = [];
   for (obj of submission) {
@@ -108,6 +109,7 @@ function getStudents(submission) {
   return students;
 }
 
+// check if assignment is not yet due -> return true
 const avgFilter = function (date) {
   date = date.split("-");
   if (parseInt(date[0]) > 2023) {
@@ -120,6 +122,9 @@ const avgFilter = function (date) {
   return false;
 };
 
+// This function handles all calculation of the current student's
+// class overall grade average as well as the grade of each of
+// their assignments -> see the comment under RETURN
 function getThisStudentAvg(studentID, submission, assignmentInfo) {
   let totalPoint = []; // contains students point on each assignment
   let pointsPossible = []; // contains each assignment possible score
@@ -131,16 +136,17 @@ function getThisStudentAvg(studentID, submission, assignmentInfo) {
           //console.log(obj["submission"]["score"], asg["points_possible"]);
           let grade = obj["submission"]["score"];
           let max_grade = asg["points_possible"];
-
+          // CHECK IF LATE PENALTY IS REQUIRED
           if (!isLate(obj["submission"]["submitted_at"], asg["due_at"])) {
-            // CHECK IF LATE PENALTY IS REQUIRED
             totalPoint.push(grade);
           } else {
-            grade = grade * 0.9;
+            grade -= max_grade * 0.1;
             totalPoint.push(grade);
           }
           pointsPossible.push(max_grade);
-          assignmentOverall[obj["assignment_id"]] = grade / max_grade;
+          assignmentOverall[obj["assignment_id"]] = parseFloat(
+            (grade / max_grade).toFixed(3)
+          );
           //sub.push(obj["submission"]["score"] / asg["points_possible"]);
         }
       }
@@ -151,7 +157,7 @@ function getThisStudentAvg(studentID, submission, assignmentInfo) {
     totalPoint.reduce((acc, curr) => acc + curr, 0) /
     pointsPossible.reduce((acc, curr) => acc + curr, 0);
   return [r, assignmentOverall];
-  // uses reduce to calculate sum of student's scores and possible scores
+  // uses reduce to calculate sum of student's scores and possible scores to find class grade average
   // return a list of [student avg grade in class, {assignment id: grade percentage}]
 }
 
@@ -159,7 +165,7 @@ function getThisStudentAvg(studentID, submission, assignmentInfo) {
 
 function getLearnerData(course, ag, submissions) {
   let result = [];
-  let students = getStudents(submissions); // array of each studentID;
+  const students = getStudents(submissions); // array of each studentID;
 
   for (id of students) {
     let tempObj = {};
@@ -178,6 +184,7 @@ function getLearnerData(course, ag, submissions) {
 //==============================================================//
 let c = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
 console.log(c);
+
 //console.log(isLate("2023-03-07", "2023-02-27"));
 // let a = getThisStudentAvg(
 //   125,
