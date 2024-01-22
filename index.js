@@ -121,32 +121,38 @@ const avgFilter = function (date) {
 };
 
 function getThisStudentAvg(studentID, submission, assignmentInfo) {
-  let tempID = studentID;
-  let totalPoint = [];
-  let pointsPossible = [];
+  let totalPoint = []; // contains students point on each assignment
+  let pointsPossible = []; // contains each assignment possible score
+  let assignmentOverall = {}; // calculate the % of each assignments
   for (obj of submission) {
     if (obj["learner_id"] === studentID) {
       for (asg of assignmentInfo) {
         if (obj["assignment_id"] === asg["id"] && !avgFilter(asg["due_at"])) {
           //console.log(obj["submission"]["score"], asg["points_possible"]);
+          let grade = obj["submission"]["score"];
+          let max_grade = asg["points_possible"];
+
           if (!isLate(obj["submission"]["submitted_at"], asg["due_at"])) {
             // CHECK IF LATE PENALTY IS REQUIRED
-            totalPoint.push(obj["submission"]["score"]);
+            totalPoint.push(grade);
           } else {
-            totalPoint.push(obj["submission"]["score"] * 0.9);
+            grade = grade * 0.9;
+            totalPoint.push(grade);
           }
-          pointsPossible.push(asg["points_possible"]);
+          pointsPossible.push(max_grade);
+          assignmentOverall[obj["assignment_id"]] = grade / max_grade;
           //sub.push(obj["submission"]["score"] / asg["points_possible"]);
         }
       }
     }
   }
-  console.log(studentID, totalPoint, pointsPossible);
-  return (
-    // uses reduce to calculate sum of student's scores and possible scores
+  //console.log(studentID, totalPoint, pointsPossible, assignmentOverall);
+  const r =
     totalPoint.reduce((acc, curr) => acc + curr, 0) /
-    pointsPossible.reduce((acc, curr) => acc + curr, 0)
-  );
+    pointsPossible.reduce((acc, curr) => acc + curr, 0);
+  return [r, assignmentOverall];
+  // uses reduce to calculate sum of student's scores and possible scores
+  // return a list of [student avg grade in class, {assignment id: grade percentage}]
 }
 
 //const calcSum = json.reduce((acc, curr) => acc + parseInt(curr["age"]), 0);
@@ -154,29 +160,32 @@ function getThisStudentAvg(studentID, submission, assignmentInfo) {
 function getLearnerData(course, ag, submissions) {
   let result = [];
   let students = getStudents(submissions); // array of each studentID;
-  let tempObj = {};
-  for (id of students) {
-    //let tempObj = {};
 
+  for (id of students) {
+    let tempObj = {};
+    let calculatedGrade = getThisStudentAvg(id, submissions, ag["assignments"]);
     tempObj["id"] = id;
-    tempObj["avg"] = getThisStudentAvg(id, submissions, ag["assignments"]);
-    console.log(id, tempObj);
+    tempObj["avg"] = calculatedGrade[0];
+    Object.keys(calculatedGrade[1]).forEach((key) => {
+      tempObj[key] = calculatedGrade[1][key];
+    });
+    result.push(tempObj);
+    //console.log(id, tempObj);
   }
+  return result;
 }
 
 //==============================================================//
-//getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
-
+let c = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
+console.log(c);
 //console.log(isLate("2023-03-07", "2023-02-27"));
-let a = getThisStudentAvg(
-  125,
-  LearnerSubmissions,
-  AssignmentGroup["assignments"]
-);
-let b = getThisStudentAvg(
-  132,
-  LearnerSubmissions,
-  AssignmentGroup["assignments"]
-);
-
-console.log(a, b);
+// let a = getThisStudentAvg(
+//   125,
+//   LearnerSubmissions,
+//   AssignmentGroup["assignments"]
+// );
+// let b = getThisStudentAvg(
+//   132,
+//   LearnerSubmissions,
+//   AssignmentGroup["assignments"]
+// );
