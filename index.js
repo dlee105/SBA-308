@@ -100,33 +100,83 @@ function isLate(submitDate, dueDate) {
 
 function getStudents(submission) {
   let students = [];
-  for (obj of submissions) {
-    if (!students.includes(obj[learner_id])) {
-      students.push(obj[learner_id]);
+  for (obj of submission) {
+    if (!students.includes(obj["learner_id"])) {
+      students.push(obj["learner_id"]);
     }
   }
   return students;
 }
 
+const avgFilter = function (date) {
+  date = date.split("-");
+  if (parseInt(date[0]) > 2023) {
+    // if year is greater than 2023
+    return true;
+  } else if (parseInt(date[1]) > 3 && parseInt(date[0]) == 2023) {
+    // if month is greater than march 2023
+    return true;
+  }
+  return false;
+};
+
 function getThisStudentAvg(studentID, submission, assignmentInfo) {
   let tempID = studentID;
+  let totalPoint = [];
+  let pointsPossible = [];
   for (obj of submission) {
-    let studentGrade = 0;
-    let totalGrade = 0;
+    if (obj["learner_id"] === studentID) {
+      for (asg of assignmentInfo) {
+        if (obj["assignment_id"] === asg["id"] && !avgFilter(asg["due_at"])) {
+          //console.log(obj["submission"]["score"], asg["points_possible"]);
+          if (!isLate(obj["submission"]["submitted_at"], asg["due_at"])) {
+            // CHECK IF LATE PENALTY IS REQUIRED
+            totalPoint.push(obj["submission"]["score"]);
+          } else {
+            totalPoint.push(obj["submission"]["score"] * 0.9);
+          }
+          pointsPossible.push(asg["points_possible"]);
+          //sub.push(obj["submission"]["score"] / asg["points_possible"]);
+        }
+      }
+    }
   }
+  console.log(studentID, totalPoint, pointsPossible);
+  return (
+    // uses reduce to calculate sum of student's scores and possible scores
+    totalPoint.reduce((acc, curr) => acc + curr, 0) /
+    pointsPossible.reduce((acc, curr) => acc + curr, 0)
+  );
 }
+
+//const calcSum = json.reduce((acc, curr) => acc + parseInt(curr["age"]), 0);
 
 function getLearnerData(course, ag, submissions) {
   let result = [];
   let students = getStudents(submissions); // array of each studentID;
-
+  let tempObj = {};
   for (id of students) {
-    let tempObj = {};
+    //let tempObj = {};
+
     tempObj["id"] = id;
-    tempObj["avg"] = getThisStudentAvg(id, ag["assignment"], submissions);
+    tempObj["avg"] = getThisStudentAvg(id, submissions, ag["assignments"]);
+    console.log(id, tempObj);
   }
 }
 
 //==============================================================//
-getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
-console.log(isLate("2023-03-07", "2023-02-27"));
+//getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
+
+//console.log(isLate("2023-03-07", "2023-02-27"));
+let a = getThisStudentAvg(
+  125,
+  LearnerSubmissions,
+  AssignmentGroup["assignments"]
+);
+let b = getThisStudentAvg(
+  132,
+  LearnerSubmissions,
+  AssignmentGroup["assignments"]
+);
+
+console.log(a, b);
