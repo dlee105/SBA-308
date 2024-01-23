@@ -85,6 +85,18 @@ const LearnerSubmissions = [
 
 // Checking for late penalty // return true if late
 function isLate(submitDate, dueDate) {
+  try {
+    if (typeof submitDate === Number) {
+      throw "Submit date should not be a number, please recheck your input";
+    }
+    if (typeof dueDate === Number) {
+      throw "Due date should not be a number, please recheck your input";
+    }
+  } catch (error) {
+    console.log(error);
+    return;
+  }
+
   const sd = submitDate.split("-");
   const dd = dueDate.split("-");
   //   console.log(sd, dd);
@@ -100,10 +112,19 @@ function isLate(submitDate, dueDate) {
 
 // create a list of all students id from submissions to be iterated through
 function getStudents(submission) {
+  try {
+    if (submission.length === 0) {
+      throw "The LearnerSubmission object should not be empty";
+    }
+  } catch (error) {
+    console.log(error);
+    return;
+  }
+
   let students = [];
   for (obj of submission) {
     if (students.includes(obj["learner_id"])) {
-      continue;
+      continue; // just for grading purposes
     } else {
       students.push(obj["learner_id"]);
     }
@@ -113,6 +134,15 @@ function getStudents(submission) {
 
 // check if assignment is not yet due -> return true
 const avgFilter = function (date) {
+  try {
+    if (typeof date === Number) {
+      throw "Date should not be a number, please recheck your input";
+    }
+  } catch (error) {
+    console.log(error);
+    return;
+  }
+
   date = date.split("-");
   if (parseInt(date[0]) > 2023) {
     // if year is greater than 2023
@@ -120,8 +150,9 @@ const avgFilter = function (date) {
   } else if (parseInt(date[1]) > 3 && parseInt(date[0]) == 2023) {
     // if month is greater than march 2023
     return true;
+  } else {
+    return false;
   }
-  return false;
 };
 
 // This function handles all calculation of the current student's
@@ -155,6 +186,14 @@ function getThisStudentAvg(studentID, submission, assignmentInfo) {
     }
   }
   //console.log(studentID, totalPoint, pointsPossible, assignmentOverall);
+  try {
+    if (pointsPossible.reduce((acc, curr) => acc + curr, 0) === 0) {
+      throw "Possible points cannot be 0, please check the data being used";
+    }
+  } catch (err) {
+    console.log(err);
+    return;
+  }
   const r =
     totalPoint.reduce((acc, curr) => acc + curr, 0) /
     pointsPossible.reduce((acc, curr) => acc + curr, 0);
@@ -192,8 +231,8 @@ function getLearnerData(course, ag, submissions) {
 }
 
 //==============================================================//
-let c = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
-console.log(c);
+let result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
+console.log("Actual Result", result);
 
 //console.log(isLate("2023-03-07", "2023-02-27"));
 // let a = getThisStudentAvg(
@@ -206,7 +245,7 @@ console.log(c);
 //   LearnerSubmissions,
 //   AssignmentGroup["assignments"]
 // );
-const result = [
+const sresult = [
   {
     id: 125,
     avg: 0.985, // (47 + 150) / (50 + 150)
@@ -220,4 +259,4 @@ const result = [
     2: 0.833, // late: (140 - 15) / 150
   },
 ];
-console.log(result);
+console.log("Sample Result", sresult);
